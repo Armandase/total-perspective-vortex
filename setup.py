@@ -1,8 +1,7 @@
 #!/usr/bin/env python
 from setuptools import setup, find_packages
 
-
-with open('README.rst') as f:
+with open('README.md') as f:
     readme = f.read()
 
 with open('LICENSE') as f:
@@ -13,9 +12,8 @@ setup(
     version='0.1',
     description='brain computer interface based on electroencephalographic data',
     long_description=readme,
-    author='armandase',
-    author_email='me@kennethreitz.com',
-    url='https://github.com/kennethreitz/samplemod',
+    author='Armandase',
+    url='https://github.com/Armandase/total-perspective-vortex/',
     license=license,
-    packages=find_packages(exclude=('tests', 'docs'))
+    install_requires=['mne', 'scikit-learn', 'matplotlib', 'numpy']
 )
