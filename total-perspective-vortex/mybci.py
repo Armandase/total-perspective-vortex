@@ -2,6 +2,7 @@ import argparse
 import mne
 import matplotlib.pyplot as plt
 import os
+import numpy as np
 
 MONTAGE = "Biosemi64"
 
@@ -74,12 +75,15 @@ def intensity_per_channels(raw):
 
 
 def plot_channels(raw):
-    raw_data = raw.get_data()
+    raw_data = np.array(raw.get_data())
+    # raw_data = raw_data.mean(axis=-1)
+    plt.xlabel("Time")
+    plt.ylabel("Amplitude")
     plt.plot(raw_data)
     plt.show()
 
 
-def main(dataset, subject, experiment):
+def main(dataset, subject, experiment, visual=False):
     path = parse_args(dataset, subject, experiment)
     raw = mne.io.read_raw_edf(path, preload=True)
     montages = mne.channels.get_builtin_montages()
@@ -91,19 +95,11 @@ def main(dataset, subject, experiment):
         exit(1)
     raw.set_montage(data_montage, on_missing='ignore')
 
-    # raw_data = raw.get_data()
-    # plt.jet()
-    # plt.figure(figsize=(20, 10))
-    # # plt.subplot(121)
-    # # plt.plot(raw_data)
-    # # plt.subplot(122)
-    # # plt.jet()
-    # # plt.imshow(raw_data[:, :])
-    # plt.imshow(raw_data[:, 0:1000])
-    #
-    # plt.show()
-    # intensity_per_channels(raw)
-    plot_channels(raw)
+    if visual is True:
+        plot_channels(raw)
+        # intensity_per_channels(raw)
+        # each_channel(raw)
+        # every_channel(raw)
 
 
 if __name__ == "__main__":
@@ -117,5 +113,9 @@ if __name__ == "__main__":
     params.add_argument(
         "--experiment", "-exp", help="Expemerient used to display", default=1, type=int
     )
+
+    params.add_argument(
+        '--visual', default=False, action=argparse.BooleanOptionalAction
+    )
     args = params.parse_args()
-    main(args.dataset, args.subject, args.experiment)
+    main(args.dataset, args.subject, args.experiment, args.visual)
