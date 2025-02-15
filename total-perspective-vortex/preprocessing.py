@@ -1,8 +1,39 @@
 import argparse
 import mne
 import matplotlib.pyplot as plt
+import os
 
 MONTAGE = "Biosemi64"
+
+
+def parse_args(datasets, subject, experiment):
+    # nb_dirs = [ if os.path.isdir(dir) for dir in os.listdir(datasets)]
+    if os.path.exists(datasets) is False:
+        raise Exception("Wrong dataset path")
+
+    nb_dirs = 0
+    for dir in os.listdir(datasets):
+        extended_path = os.path.join(datasets, dir)
+        if os.path.isdir(extended_path):
+            nb_dirs += 1
+
+    if subject <= 0 or subject > nb_dirs:
+        raise Exception("Wrong subject provided.")
+    subject = f'S{str(subject).zfill(3)}'
+
+    nb_experiment = 0
+    sub_path = os.path.join(datasets, subject)
+    for file in os.listdir(sub_path):
+        extended_path = os.path.join(sub_path, file)
+        if os.path.isfile(extended_path):
+            nb_experiment += 1
+    nb_experiment /= 2
+    experiment = str(experiment).zfill(2)
+
+    experiment_path = os.path.join(sub_path, f'{subject}R{experiment}.edf')
+    if os.path.exists(experiment_path) is False:
+        raise Exception(f"Experiment {experiment_path} doesn't exist.")
+    return experiment_path
 
 
 def every_channel(raw):
@@ -48,8 +79,9 @@ def plot_channels(raw):
     plt.show()
 
 
-def main(dataset):
-    raw = mne.io.read_raw_edf(dataset, preload=True)
+def main(dataset, subject, experiment):
+    path = parse_args(dataset, subject, experiment)
+    raw = mne.io.read_raw_edf(path, preload=True)
     montages = mne.channels.get_builtin_montages()
 
     data_montage = next((montage for montage in montages if MONTAGE in montage.title()), None)
@@ -79,5 +111,11 @@ if __name__ == "__main__":
     params.add_argument(
         "--dataset", "-d", help="Path to the dataset", default='../datasets/eggmmidb'
     )
+    params.add_argument(
+        "--subject", "-s", help="Subject use to plots", default=1, type=int
+    )
+    params.add_argument(
+        "--experiment", "-exp", help="Expemerient used to display", default=1, type=int
+    )
     args = params.parse_args()
-    main(args.dataset)
+    main(args.dataset, args.subject, args.experiment)
