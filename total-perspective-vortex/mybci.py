@@ -9,15 +9,10 @@ MONTAGE = "Biosemi64"
 
 
 
-def every_channel(raw):
-    """
-    Display in one window the overlapping of every channels
-
-    Takes a raw (raw with montage set)
-    :param raw:
-    """
+def psd_plot(raw):
     raw.compute_psd().plot(picks="data", exclude="bads", average=True)
-    plt.plot()
+
+    plt.show()
 
 
 def each_channel(raw):
@@ -49,8 +44,8 @@ def intensity_per_channels(raw):
 def plot_channels(raw):
     raw_data = np.array(raw.get_data())
     # raw_data = raw_data.mean(axis=-1)
-    plt.xlabel("Time")
-    plt.ylabel("Amplitude")
+    plt.xlabel("brain cell")
+    plt.ylabel("cell")
     plt.plot(raw_data)
     plt.show()
 
@@ -71,10 +66,10 @@ def main(dataset, subject, runs, visual=False):
     raw.set_montage(data_montage, on_missing='ignore')
 
     if visual is True:
-        plot_channels(raw)
+        # plot_channels(raw)
         # intensity_per_channels(raw)
         # each_channel(raw)
-        # every_channel(raw)
+        psd_plot(raw)
 
 
 if __name__ == "__main__":
