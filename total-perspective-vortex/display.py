@@ -14,7 +14,8 @@ def each_channel(raw):
     Takes a raw (return of mne.io.read_raw_ed)
     :param raw:
     """
-    raw.plot()
+    raw.plot(n_channels=64, scalings="auto", title="Data from arrays", show=True, block=True)
+    # raw.plot()
     plt.show()
 
 
@@ -27,13 +28,12 @@ def intensity_per_channels(raw):
     """
     raw_data = raw.get_data()
     plt.jet()
-    plt.imshow(raw_data[:, 0:1000])
+    plt.imshow(raw_data)
     plt.show()
 
 
 def plot_channels(raw):
     raw_data = np.array(raw.get_data())
-    # raw_data = raw_data.mean(axis=-1)
     plt.xlabel("brain cell")
     plt.ylabel("cell")
     plt.plot(raw_data)

@@ -1,19 +1,3 @@
-# exemple
-# from sklearn.svm import SVC
-# from sklearn.preprocessing import StandardScaler
-# from sklearn.datasets import make_classification
-# from sklearn.model_selection import train_test_split
-# from sklearn.pipeline import Pipeline
-# X, y = make_classification(random_state=0)
-# X_train, X_test, y_train, y_test = train_test_split(X, y,
-#                                                     random_state=0)
-# pipe = Pipeline([('scaler', StandardScaler()), ('svc', SVC())])
-# # The pipeline can be used as any other estimator
-# # and avoids leaking the test set into the train set
-# pipe.fit(X_train, y_train).score(X_test, y_test)
-# # An estimator's parameter can be set using '__' syntax
-# pipe.set_params(svc__C=10).fit(X_train, y_train).score(X_test, y_test)
-
 from mne.decoding import CSP
 from sklearn.pipeline import Pipeline
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
@@ -31,9 +15,9 @@ def create_pipeline(reducter_name='csp', classifier_name='lda'):
                        norm_trace=False,
                        cov_est="concat",
                        cov_method_params=None,
-                       transform_into="average_power")
+                       transform_into="average_power", rank=None)
     if classifier_name == "LDA":
-        classif = LinearDiscriminantAnalysis(n_components=None,
+        classifier = LinearDiscriminantAnalysis(n_components=None,
                                             priors=None,
                                             shrinkage=None,
                                             solver="svd",
@@ -41,5 +25,5 @@ def create_pipeline(reducter_name='csp', classifier_name='lda'):
                                             tol=0.0001)
 
     clf = Pipeline([(reducter_name, reducter),
-                    (classifier_name, classif)])
+                    (classifier_name, classifier)])
     return clf
