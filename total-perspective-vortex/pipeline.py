@@ -23,6 +23,7 @@ def create_pipeline(reducter_name='csp', classifier_name='lda'):
     classifier_name = classifier_name.upper()
     classifier = None
     reducter = None
+
     if reducter_name == 'CSP':
         reducter = CSP(n_components=4,
                        reg=None,
@@ -40,5 +41,5 @@ def create_pipeline(reducter_name='csp', classifier_name='lda'):
                                             tol=0.0001)
 
     clf = Pipeline([(reducter_name, reducter),
-                    (classifier_name, classifier)])
+                    (classifier_name, classif)])
     return clf
