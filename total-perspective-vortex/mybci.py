@@ -1,54 +1,18 @@
 import argparse
 import mne
-import os
 from mne.datasets import eegbci
-import matplotlib.pyplot as plt
-import numpy as np
+from display import plot_channels, psd_plot, intensity_per_channels, each_channel
+import sklearn
+from sklearn.model_selection import cross_val_score
+from pipeline import create_pipeline
+from mne import Epochs, pick_types
 
 MONTAGE = "Biosemi64"
 
-
-
-def psd_plot(raw):
-    raw.compute_psd().plot(picks="data", exclude="bads", average=True)
-
-    plt.show()
-
-
-def each_channel(raw):
-    """
-    Display one window with each channel from the raw edf file
-
-    Takes a raw (return of mne.io.read_raw_ed)
-    :param raw:
-    """
-    raw.plot()
-    plt.show()
-
-
-def intensity_per_channels(raw):
-    """
-    Display the intensity of channels in the raw edf file.
-    (red: intense activity, blue: low activity)
-    :param raw:
-    :return:
-    """
-    raw_data = raw.get_data()
-    plt.jet()
-    plt.figure(figsize=(20, 10))
-    plt.imshow(raw_data[:, 0:1000])
-
-    plt.show()
-
-
-def plot_channels(raw):
-    raw_data = np.array(raw.get_data())
-    # raw_data = raw_data.mean(axis=-1)
-    plt.xlabel("brain cell")
-    plt.ylabel("cell")
-    plt.plot(raw_data)
-    plt.show()
-
+def train(data):
+    pipe =  create_pipeline()
+    
+    scores = cross_val_score(pipe, epochs_data_train, labels, cv=cv, n_jobs=None)
 
 def main(dataset, subject, runs, visual=False):
     ret = eegbci.load_data(subject=subject, runs=runs, path=dataset) 
@@ -66,10 +30,11 @@ def main(dataset, subject, runs, visual=False):
     raw.set_montage(data_montage, on_missing='ignore')
 
     if visual is True:
-        # plot_channels(raw)
-        # intensity_per_channels(raw)
-        # each_channel(raw)
+        plot_channels(raw)
+        intensity_per_channels(raw)
+        each_channel(raw)
         psd_plot(raw)
+    
 
 
 if __name__ == "__main__":
