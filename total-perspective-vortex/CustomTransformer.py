@@ -1,6 +1,7 @@
 import numpy as np
 from sklearn.base import TransformerMixin
 
+# transformer is used to transform the data but did apply any learning
 class CustomTransformer(TransformerMixin):
     def __init__(self, *, param=1):
         super().__init__()

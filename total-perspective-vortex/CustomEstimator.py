@@ -1,6 +1,7 @@
 import numpy as np
 from sklearn.base import BaseEstimator
 
+# estimator is used to predict the data
 class CustomEstimator(BaseEstimator):
     def __init__(self, *, param=1):
         super().__init__()

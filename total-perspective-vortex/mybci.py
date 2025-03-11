@@ -8,10 +8,17 @@ from pipeline import create_pipeline
 from mne import Epochs, pick_types
 
 MONTAGE = "Biosemi64"
+DELTA_BAND = (0.5, 4.0)
+THETA_BAND = (4.0, 8.0)
+ALPHA_BAND = (7.0, 13.0)
+BETA_BAND = (13.0, 30.0)
+GAMMA_BAND = (30.0, 100.0)
+
 
 def train(data, tmin=-1.0, tmax=4.0, seed=None):
-    data.filter(7.0, 30.0, fir_design='firwin', skip_by_annotation='edge')
-    pipe =  create_pipeline()
+    data.filter(ALPHA_BAND[0], BETA_BAND[1], fir_design='firwin', skip_by_annotation='edge')
+    # pipe =  create_pipeline(classifier_name='LDA_shrinkage')
+    pipe =  create_pipeline(classifier_name='LDA')
     picks = pick_types(data.info, meg=False, eeg=True, stim=False, eog=False, exclude="bads")
     events, events_id = mne.events_from_annotations(data, event_id={"T1": 0, "T2": 1})
 
@@ -20,6 +27,7 @@ def train(data, tmin=-1.0, tmax=4.0, seed=None):
     epochs_data_train = epochs_train.get_data(copy=False)
 
     cv = ShuffleSplit(10, test_size=0.2, random_state=seed)
+    
     labels = epochs.events[:, -1]
 
     class_repartition = np.bincount(labels)
@@ -30,17 +38,21 @@ def train(data, tmin=-1.0, tmax=4.0, seed=None):
     print("Class repartition: ", class_repartition)
     print("Classification accuracy: %0.1f (+/- %0.1f)" % (100 * scores.mean(), 100 * scores.std()))
 
+    # avg_scores = []
     # for train_idx, test_idx in cv.split(epochs_data_train):
     #     y_train, y_test = labels[train_idx], labels[test_idx]
 
     #     X_train = epochs_data_train[train_idx]
     #     X_test = epochs_data_train[test_idx]
+    #     # pipe.fit(X_train, y_train)
     #     pipe.fit(X_train, y_train)
     #     score = pipe.score(X_test, y_test)
     #     print("Score: ", score)
+    #     avg_scores.append(score)
+    # print("Average score: ", np.mean(avg_scores))
 
 def plots(raw):
-    # plot_channels(raw)
+    plot_channels(raw)
     intensity_per_channels(raw)
     each_channel(raw)
     psd_plot(raw)
