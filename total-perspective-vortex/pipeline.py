@@ -1,6 +1,7 @@
 from mne.decoding import CSP
 from sklearn.pipeline import Pipeline
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+from sklearn.base import TransformerMixin, BaseEstimator
 
 def create_pipeline(reducter_name='csp', classifier_name='lda'):
     reducter_name = reducter_name.upper()

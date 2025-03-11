@@ -3,9 +3,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 def psd_plot(raw: mne.io.Raw):
-    raw.compute_psd().plot(picks="data", exclude="bads", average=True)
+    raw.plot_psd()
     plt.show()
 
+def custom_psd_plot(raw: mne.io.Raw):
+    raw.compute_psd().plot(picks="data", exclude="bads", average=True)
+    plt.show()
 
 def each_channel(raw):
     """
