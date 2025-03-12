@@ -17,8 +17,7 @@ GAMMA_BAND = (30.0, 100.0)
 
 def train(data, tmin=-1.0, tmax=4.0, seed=None):
     data.filter(ALPHA_BAND[0], BETA_BAND[1], fir_design='firwin', skip_by_annotation='edge')
-    # pipe =  create_pipeline(classifier_name='LDA_shrinkage')
-    pipe =  create_pipeline(classifier_name='LDA')
+    pipe =  create_pipeline(estimator_name='LDA_shrinkage')
     picks = pick_types(data.info, meg=False, eeg=True, stim=False, eog=False, exclude="bads")
     events, events_id = mne.events_from_annotations(data, event_id={"T1": 0, "T2": 1})
 
@@ -44,7 +43,6 @@ def train(data, tmin=-1.0, tmax=4.0, seed=None):
 
     #     X_train = epochs_data_train[train_idx]
     #     X_test = epochs_data_train[test_idx]
-    #     # pipe.fit(X_train, y_train)
     #     pipe.fit(X_train, y_train)
     #     score = pipe.score(X_test, y_test)
     #     print("Score: ", score)
@@ -87,7 +85,9 @@ if __name__ == "__main__":
     params.add_argument(
         "--subject", "-s", help="Subject use to plots", default=1, type=int
     )
-    params.add_argument('-r','--runs', nargs='+', help='Expemerients used', required=True, type=int)
+    params.add_argument(
+        '-r','--runs', nargs='+', help='Expemerients used', required=True, type=int
+    )
     params.add_argument(
         '--visual', default=False, action=argparse.BooleanOptionalAction
     )
