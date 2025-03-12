@@ -1,5 +1,6 @@
 import numpy as np
-from mne.decoding import CSP
+from mne.decoding import CSP, UnsupervisedSpatialFilter
+from sklearn.decomposition import PCA, FastICA
 from sklearn.base import TransformerMixin
 
 # transformer is used to transform the data but did apply any learning
@@ -20,13 +21,18 @@ class CustomTransformer(TransformerMixin):
                 cov_est="concat",
                 cov_method_params=None,
                 transform_into="average_power", rank=None)
+        elif name == "PCA":
+            transformer = UnsupervisedSpatialFilter(PCA(4), average=False)
+        elif name == "ICA":
+            transformer = UnsupervisedSpatialFilter(FastICA(4, whiten='unit-variance'), average=False)
         else:
             raise Exception(f'{name} is not handle')
         return transformer
 
     def crop_data(self, X):
-        epochs_train = X.copy().crop(tmin=1.0, tmax=2.0)
-        epochs_data_train = epochs_train.get_data(copy=False)
+        epochs_raw_data = X.copy().crop(tmin=1.0, tmax=2.0)
+        epochs_data = epochs_raw_data.get_data(copy=False)
+        return epochs_data
 
     def fit(self, X, y=None):
         return self.transformer.fit(X, y)
