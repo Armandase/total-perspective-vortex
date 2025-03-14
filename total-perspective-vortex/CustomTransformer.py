@@ -2,6 +2,7 @@ import numpy as np
 from mne.decoding import CSP, UnsupervisedSpatialFilter
 from sklearn.decomposition import PCA, FastICA
 from sklearn.base import TransformerMixin
+from CustomCSP import CustomCSP
 
 # transformer is used to transform the data but did apply any learning
 class CustomTransformer(TransformerMixin):
@@ -21,6 +22,8 @@ class CustomTransformer(TransformerMixin):
                 cov_est="concat",
                 cov_method_params=None,
                 transform_into="average_power", rank=None)
+        elif name == 'CUSTOM_CSP':
+            transformer = CustomCSP(n_components=4)
         elif name == "PCA":
             transformer = UnsupervisedSpatialFilter(PCA(4), average=False)
         elif name == "ICA":

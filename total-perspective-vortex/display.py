@@ -1,5 +1,6 @@
 import mne
 import numpy as np
+import seaborn as sns
 import matplotlib.pyplot as plt
 
 def custom_psd_plot(raw: mne.io.Raw):
@@ -41,4 +42,14 @@ def plot_channels(raw):
 def plot_montage(montage):
     montage.plot()
     montage.plot(kind='3d')
+    plt.show()
+    
+def plot_matrix(raw):
+    # (64, 161)
+    df_raw = raw.to_data_frame()
+    df_raw = df_raw.drop(columns=['time'])
+    corr = df_raw.corr()
+    # import pandas as pd
+    # pd.plotting.scatter_matrix(df_raw, alpha = 0.3, figsize = (14,8), diagonal = 'kde')
+    sns.heatmap(corr, )
     plt.show()
