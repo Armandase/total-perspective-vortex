@@ -28,7 +28,7 @@ class CustomCSP(TransformerMixin):
         
         return cov / X.shape[1]
         
-    def spatial_covariance(self, X):
+    def normalized_spatial_covariance(self, X):
         """
         compute the covariance for a single trial
             and normalize it to eliminate the magnitude variation in EEG between individuals
@@ -37,7 +37,8 @@ class CustomCSP(TransformerMixin):
          
          return: cov (n_channels, n_channels)
         """
-        cov = X.T @ X
+        # cov = np.dot(X.T, X)
+        cov = np.dot(X, X.T)
         return cov / np.trace(cov)
     
     def population_covariance(self, X):
@@ -49,46 +50,78 @@ class CustomCSP(TransformerMixin):
         factor = 1 / n_trials
         pop_cov = np.zeros((X.shape[1], X.shape[1]))
         for trial in X:
-            cov = self.spatial_covariance(trial)
+            cov = self.normalized_spatial_covariance(trial)
             pop_cov += factor * cov
         return pop_cov
     
     def extract_class(self, X, y):
         list_class = []
-        print()
-        for i in np.unique(y):
+
+        for i in range(len(np.unique(y))):
             list_class.append(X[y == i])
-        print(list_class)
-        exit(0)
         return list_class
     
+    def decentre_data(self, X, X_avg):
+        """
+        Decenter the data with respect to their class average
+        """
+        return X - X_avg
+    
     def fit(self, X, y=None):
+        X = X.copy()
+        list_class = self.extract_class(X, y)
+        avg_class = []
+        for x_class in list_class:
+            avg_class.append(np.mean(x_class, axis=0))
+        for i in range(X.shape[0]):
+            X[i] = self.decentre_data(X[i], avg_class[y[i]])
         
-        for batch in range(X.shape[0]):
-            x = X[batch]
-            
-            # sigma = x @ x.T
-            # trace = np.trace(x)
-            R1 = X[0] @ X[0].T
-            R2 = X[1] @ X[1].T
-            R1 = R1 / x.shape[1]
-            R2 = R2 / x.shape[1]
-            
-            # eigvals, eigvecs = np.linalg.eig(R1, R2)
-            eigvals, eigvecs = np.linalg.eig(R1)
-            eigvals2 = np.diagonal(np.dot(np.dot(eigvecs.T, R2), eigvecs))
-            print(eigvals)
-            print(eigvals2)
-            # matrix of eigenvectors P = [p1 ... pn]
-            # the diagonal matrix D {\displaystyle \mathbf {D} } of eigenvalues { λ 1 , ⋯ , λ n } {\displaystyle \{\lambda _{1},\cdots ,\lambda _{n}\}} sorted by decreasing order such that
-            D = np.diag(eigvals)
-            D2 = np.diag(eigvals2)
-            print(D)
-            print(D2)
-            
-            exit(0)
-            
-            
+        decentred_list_class = self.extract_class(X, y)
+        norm_spatial_cov = []
+        for decentred_class in decentred_list_class:
+            norm_spatial_cov.append(self.population_covariance(decentred_class))
+        
+        #compostite qui signifie que c'est la combinaison de plusieurs elements
+        composite_spatial_cov = np.sum(norm_spatial_cov, axis=0)
+        # decomposition en valeurs propres
+        # les valeurs propres sont egales aux racines du polynome caracteristique de la matrice
+        eigvals, eigvecs = np.linalg.eig(composite_spatial_cov)
+        # diagonal matrix of eigenvalues sorted in descending order
+        sorted_eigvals = np.sort(eigvals)[::-1]
+        diag = np.diag(sorted_eigvals)
+        
+        print('Diagonal:', diag.shape)
+        print('Eigvals:', eigvals.shape)
+        print('eigvecs:', eigvecs.shape)
+        
+        # whitening matrix
+        whitening = np.dot(np.sqrt(np.linalg.inv(diag)), eigvecs.T)
+        print('Whitening:', whitening.shape)
+        
+        # whitening performed on the spatial covariance matrices
+        spatial_cov_whitened = []
+        for cov in norm_spatial_cov:
+            spatial_cov_whitened.append(np.dot(np.dot(whitening, cov), whitening.T))
+
+        whitening_eigvecs = []
+        # whitening_diags = []
+        for cov in spatial_cov_whitened:
+            eigvals, eigvecs = np.linalg.eig(cov)
+            sorted_eigvals = np.sort(eigvals)[::-1]
+            whitening_eigvecs.append(eigvecs)
+            # whitening_diags.append(np.diag(sorted_eigvals))
+        
+        # spatial filter
+        spatial_filter = []
+        for eigvecs in whitening_eigvecs:
+            spatial_filter.append(np.dot(eigvecs.T, whitening))
+
+        # apply spatial filter to the data
+        # X_filtered = []
+        # for i in range(X.shape[0]):
+        #     X_filtered.append(np.dot(spatial_filter[y[i]], X[i]))
+        #     print('X_filtered:', X_filtered[-1].shape)
+        # exit(1)
         return self
 
     def transform(self, X):
@@ -114,7 +147,11 @@ class CustomCSP(TransformerMixin):
         #                  = As(t) * s(t)transpos * Atranspos
         #                  = ARsAtranspos
 
-
+        if self.is_fitted_ is False:
+            raise Exception("Model not fitted")
+        X = X.copy()
+        
+        
         return X
     
     def fit_transform(self, X, y):
