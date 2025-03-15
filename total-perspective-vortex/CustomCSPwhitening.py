@@ -74,16 +74,30 @@ class CustomCSP(TransformerMixin):
         eigvals, eigvecs = scipy.linalg.eigh(composite_spatial_cov) # (V)
         # diagonal matrix of eigenvalues sorted in descending order
         # sorted_eigvals = np.sort(eigvals)[::-1]
+        diag = np.diag(eigvals) # (D)
+        print('eigvecs shape: ', eigvecs.shape)
         
-        # # spatial filter (W)
-        # i = np.argsort(eigvals)
-        # ix = np.empty_like(i)
-        # ix[1::2] = i[: len(i) // 2]
-        # ix[0::2] = i[len(i) // 2 :][::-1]
+        # whitening matrix (P)
+        whitening = np.dot(np.sqrt(np.linalg.inv(diag)), eigvecs.T)
+        
+        # whitening performed on the spatial covariance matrices
+        spatial_cov_whitened = [] # PCnP′
+        for cov in norm_spatial_cov:
+            spatial_cov_whitened.append(np.dot(np.dot(whitening, cov), whitening.T))
 
-        # eigvecs = eigvecs[:, ix]
+        whitening_eigvecs = [] # BΛnB′
+        for cov in spatial_cov_whitened:
+            eigvals, eigvecs = scipy.linalg.eigh(cov)
+            # sorted_eigvals = np.sort(eigvals)[::-1]
+            whitening_eigvecs.append(eigvals)
+        
+        # spatial filter (W)
+        spatial_filter = []
+        for eigvecs in whitening_eigvecs:
+            # spatial_filter.append(np.dot(eigvecs.T, whitening))
+            spatial_filter.append(eigvecs.T)
 
-        self.filters = np.array(eigvecs.T)[:self.n_components]
+        self.filters = np.array(spatial_filter)
         # self.filters = np.array(spatial_filter[:self.n_components])
         
         self.is_fit_ = True
@@ -98,8 +112,10 @@ class CustomCSP(TransformerMixin):
             # raise ValueError("The model is not fitted yet")
             print("The model is not fitted yet")
             return X_transform
+        print(self.filters.shape)
         X_transform = np.asarray([np.dot(self.filters, x) for x in X_transform])
         X_transform = (X_transform ** 2).mean(axis=2)
+        print(X_transform.shape)
         return X_transform
     
     def fit_transform(self, X, y):

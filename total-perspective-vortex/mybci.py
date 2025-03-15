@@ -24,6 +24,7 @@ def train(data, tmin=0.0, tmax=4.0, seed=None):
     data.filter(ALPHA_BAND[0], BETA_BAND[1], fir_design='firwin', skip_by_annotation='edge')
     # pipe =  create_pipeline(estimator_name='SVM', reducter_name='CSP')
     pipe =  create_pipeline(reducter_name='custom_CSP', estimator_name='LDA_shrinkage')
+    # pipe =  create_pipeline(reducter_name='CSP_TEST', estimator_name='LDA_shrinkage')
     picks = pick_types(data.info, meg=False, eeg=True, stim=False, eog=False, exclude="bads")
     events, events_id = mne.events_from_annotations(data, event_id={"T1": 0, "T2": 1})
 
@@ -98,7 +99,7 @@ def main(dataset, subject, runs, visual=False, full=False):
         montage = mne.channels.make_standard_montage(montage_name)
         plots(raw, montage)
         exit(0)
-    train(raw, tmin=0., tmax=4.)
+    train(raw, tmin=0., tmax=4., seed=42)
 
 
 if __name__ == "__main__":
