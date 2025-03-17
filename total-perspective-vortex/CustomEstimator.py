@@ -1,6 +1,8 @@
 import numpy as np
 from sklearn.base import BaseEstimator
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.neural_network import MLPClassifier
 from sklearn import svm
 from sklearn.metrics import accuracy_score
 
@@ -33,6 +35,11 @@ class CustomEstimator(BaseEstimator):
                                                 tol=0.0001)
         elif name == "SVM":
             classifier = svm.SVC()
+        elif name == 'KNN':
+            classifier = KNeighborsClassifier(n_neighbors=3)
+        elif name == 'MLP':
+            # add option to prevent overfitting 
+            classifier = MLPClassifier(activation='relu', max_iter=300, hidden_layer_sizes=(256, 128, 64), solver='adam')
         else:
             raise Exception(f'{name} is not handle')
         return classifier

@@ -51,9 +51,8 @@ class CustomCSPwhitening(TransformerMixin):
         """
         return X - X_avg
     
-    def fit(self, X, y=None):
-        print('Fitting CSP')
-        X = X.copy()
+    def fit(self, X_in, y=None):
+        X = X_in.copy()
         list_class = self.extract_class(X, y)
         avg_class = []
         for x_class in list_class:
@@ -68,42 +67,39 @@ class CustomCSPwhitening(TransformerMixin):
         
         #compostite qui signifie que c'est la combinaison de plusieurs elements
         composite_spatial_cov = np.sum(norm_spatial_cov, axis=0) # (Cc)
+        # composite_spatial_cov = np.concatenate(norm_spatial_cov) # (Cc)
         # decomposition en valeurs propres
         # les valeurs propres sont egales aux racines du polynome caracteristique de la matrice
-        # eigvals, eigvecs = np.linalg.eig(composite_spatial_cov) # (V)
         eigvals, eigvecs = scipy.linalg.eigh(composite_spatial_cov) # (V)
 
 
-        diag_inv_sqrt = np.diag(1.0 / np.sqrt(eigvals)) # (D)
-        print('eigvecs shape: ', eigvecs.shape)
+        diag_inv_sqrt = np.diag(np.sqrt(1/(eigvals + 1e-6))) # (D)
         
         # whitening matrix (P)
-        # whitening = np.dot(np.sqrt(np.linalg.inv(diag_inv_sqrt)), eigvecs.T)
         whitening = np.dot(diag_inv_sqrt, eigvecs.T)
         
         # whitening performed on the spatial covariance matrices
         spatial_cov_whitened = [] # Sn = PCnP′
         for cov in norm_spatial_cov:
-            spatial_cov_whitened.append(np.dot(np.dot(whitening, cov), whitening.T)) 
+            spatial_cov_whitened.append(np.dot(np.dot(cov, diag_inv_sqrt.T), whitening)) 
 
-        whitening_eigvecs = [] # BΛnB′
-        for cov in spatial_cov_whitened:
-            eigvals, eigvecs = scipy.linalg.eigh(cov)
-            whitening_eigvecs.append(eigvals)
+        composite_spatial_cov_whitened = np.sum(spatial_cov_whitened, axis=0) # (BΛnB′)
+        eigvals, eigvecs = scipy.linalg.eigh(composite_spatial_cov_whitened) # (V)
         
-        # spatial filter (W)
-        spatial_filter = []
-        for eigvecs in whitening_eigvecs:
-            # spatial_filter.append(np.dot(eigvecs.T, whitening))
-            spatial_filter.append(eigvecs.T)
+        # To standardize features
+        self.filters = eigvecs.T
+        
+        X_in = np.asarray([np.dot(self.filters, x) for x in X_in])
+        X_in = (X_in ** 2).mean(axis=2)
 
-        self.filters = np.array(spatial_filter[:self.n_components]) 
+        # To standardize features
+        self.mean = X_in.mean(axis=0)
+        self.std = X_in.std(axis=0)
         
         self.is_fit_ = True
         return self
 
-    def transform(self, X):
-        print('Transform CSP')
+    def transform(self, X, log=False):
         X_transform = X.copy()
         # apply spatial filter to the data
 
@@ -113,10 +109,14 @@ class CustomCSPwhitening(TransformerMixin):
             return X_transform
         X_transform = np.asarray([np.dot(self.filters, x) for x in X_transform])
         X_transform = (X_transform ** 2).mean(axis=2)
+        if log is True:
+            X_transform = np.log(X_transform)
+        else:
+            X_transform -= self.mean
+            X_transform /= self.std
         return X_transform
     
     def fit_transform(self, X, y):
-        print('Fitting and transforming CSP')
         self.fit(X, y)
         # filters should be (64, 64)
         # output should be (12, n_components)

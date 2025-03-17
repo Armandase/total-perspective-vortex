@@ -14,9 +14,11 @@ def each_channel(raw):
     Takes a raw (return of mne.io.read_raw_ed)
     :param raw:
     """
+    if isinstance(raw, np.ndarray):
+        raw = raw[0]
+        info = mne.create_info(ch_names=[f"ch{i}" for i in range(raw.shape[0])], sfreq=160, ch_types="eeg")
+        raw = mne.io.RawArray(raw, info)
     raw.plot(n_channels=64, scalings="auto", title="Data from arrays", show=True, block=True)
-    # raw.plot()
-    plt.show()
 
 
 def intensity_per_channels(raw):

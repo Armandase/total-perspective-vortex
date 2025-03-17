@@ -24,8 +24,10 @@ def train(data, tmin=0.0, tmax=4.0, seed=None):
     data.filter(ALPHA_BAND[0], BETA_BAND[1], fir_design='firwin', skip_by_annotation='edge')
     # pipe =  create_pipeline(estimator_name='SVM', reducter_name='CSP')
     # pipe =  create_pipeline(reducter_name='custom_CSP', estimator_name='LDA_shrinkage')
-    pipe =  create_pipeline(reducter_name='custom_CSP_Whitening', estimator_name='LDA_shrinkage')
     # pipe =  create_pipeline(reducter_name='CSP', estimator_name='LDA_shrinkage')
+    # pipe =  create_pipeline(reducter_name='custom_CSP_Whitening', estimator_name='KNN')
+    pipe =  create_pipeline(reducter_name='custom_CSP_Whitening', estimator_name='LDA_shrinkage')
+    # pipe =  create_pipeline(reducter_name='custom_CSP_Whitening', estimator_name='MLP')
     picks = pick_types(data.info, meg=False, eeg=True, stim=False, eog=False, exclude="bads")
     events, events_id = mne.events_from_annotations(data, event_id={"T1": 0, "T2": 1})
 
@@ -35,6 +37,7 @@ def train(data, tmin=0.0, tmax=4.0, seed=None):
 
     # K-fold but still keep the dataset balanced(repartition) between the classes regardless of the fold
     cv = StratifiedKFold(n_splits=5, random_state=seed, shuffle=True)
+    # cv = ShuffleSplit(n_splits=5, test_size=0.2, random_state=seed)
     
     labels = epochs.events[:, -1]
 
