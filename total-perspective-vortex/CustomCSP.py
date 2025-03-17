@@ -70,22 +70,21 @@ class CustomCSP(TransformerMixin):
         composite_spatial_cov = np.sum(norm_spatial_cov, axis=0) # (Cc)
         # decomposition en valeurs propres
         # les valeurs propres sont egales aux racines du polynome caracteristique de la matrice
-        # eigvals, eigvecs = np.linalg.eig(composite_spatial_cov) # (V)
+        # sorted in ascending order        
         eigvals, eigvecs = scipy.linalg.eigh(composite_spatial_cov) # (V)
-        # diagonal matrix of eigenvalues sorted in descending order
-        # sorted_eigvals = np.sort(eigvals)[::-1]
         
         # # spatial filter (W)
         # i = np.argsort(eigvals)
         # ix = np.empty_like(i)
         # ix[1::2] = i[: len(i) // 2]
         # ix[0::2] = i[len(i) // 2 :][::-1]
+        # print('ix: ', ix)
+        # exit()
 
         # eigvecs = eigvecs[:, ix]
 
         self.filters = np.array(eigvecs.T)[:self.n_components]
-        # self.filters = np.array(spatial_filter[:self.n_components])
-        
+
         self.is_fit_ = True
         return self
 

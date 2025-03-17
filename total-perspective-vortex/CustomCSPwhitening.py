@@ -47,7 +47,7 @@ class CustomCSP(TransformerMixin):
     
     def decentre_data(self, X, X_avg):
         """
-        Decenter the data with respect to their class average
+        Decenter the data with respect to their class average (recentre to the origin)
         """
         return X - X_avg
     

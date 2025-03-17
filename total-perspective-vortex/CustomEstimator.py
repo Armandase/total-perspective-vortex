@@ -38,6 +38,9 @@ class CustomEstimator(BaseEstimator):
         return classifier
     
     def fit(self, X, y):
+        # Reshape X to be 2-dimensional
+        # n_samples, n_channels, n_times = X.shape
+        # X_reshaped = X.reshape(n_samples, n_channels * n_times)
         self.classifier.fit(X=X, y=y)
         self.is_fitted_ = True
         return self
@@ -45,7 +48,12 @@ class CustomEstimator(BaseEstimator):
     def predict(self, X):
         if not self.is_fitted_:
             raise Exception("This %s instance is not fitted yet" % self.__class__.__name__)
-        return self.classifier.predict(X=X)
+        # Reshape X to be 2-dimensional
+        # n_samples, n_channels, n_times = X.shape
+        # X_reshaped = X.reshape(n_samples, n_channels * n_times)
+        # X_reshaped = X.reshape(n_samples, n_channels * n_times)
+        y_pred = self.classifier.predict(X)
+        return y_pred
         
     def score(self, X, y_true):
         y_pred = self.predict(X=X)
