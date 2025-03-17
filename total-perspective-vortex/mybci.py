@@ -23,7 +23,8 @@ def class_repartition(labels):
 def train(data, tmin=0.0, tmax=4.0, seed=None):
     data.filter(ALPHA_BAND[0], BETA_BAND[1], fir_design='firwin', skip_by_annotation='edge')
     # pipe =  create_pipeline(estimator_name='SVM', reducter_name='CSP')
-    pipe =  create_pipeline(reducter_name='custom_CSP', estimator_name='LDA_shrinkage')
+    # pipe =  create_pipeline(reducter_name='custom_CSP', estimator_name='LDA_shrinkage')
+    pipe =  create_pipeline(reducter_name='custom_CSP_Whitening', estimator_name='LDA_shrinkage')
     # pipe =  create_pipeline(reducter_name='CSP', estimator_name='LDA_shrinkage')
     picks = pick_types(data.info, meg=False, eeg=True, stim=False, eog=False, exclude="bads")
     events, events_id = mne.events_from_annotations(data, event_id={"T1": 0, "T2": 1})
@@ -31,8 +32,6 @@ def train(data, tmin=0.0, tmax=4.0, seed=None):
     epochs = Epochs(raw=data, events=events, event_id=events_id, tmin=tmin, tmax=tmax, proj=True, picks=picks, baseline=None, preload=True)
     epochs_train = epochs.copy().crop(tmin=1.0, tmax=2.0)
     epochs_data_train = epochs_train.get_data(copy=False)
-    # epochs_test = epochs.copy().crop(tmin=2.0, tmax=3.0)
-    # epochs_data_test = epochs_test.get_data(copy=False)
 
     # K-fold but still keep the dataset balanced(repartition) between the classes regardless of the fold
     cv = StratifiedKFold(n_splits=5, random_state=seed, shuffle=True)
@@ -55,7 +54,7 @@ def train(data, tmin=0.0, tmax=4.0, seed=None):
         pipe.fit(X_train, y_train)
         score = pipe.score(X_train, y_train)
         val_score = pipe.score(X_test, y_test)
-        # print("Score: ", score)
+        print("Score: ", score)
         avg_scores.append(score)
         avg_val_scores.append(val_score)
     print("Average score: ", np.mean(avg_scores))
@@ -86,7 +85,8 @@ def main(dataset, subject, runs, visual=False, full=False):
         file_names = eegbci.load_data(subjects=subject, runs=runs, path=dataset)
     else:
         print("Loading all runs")
-        subjects = range(1, 110)
+        # subjects = range(1, 110)
+        subjects = range(1, 50)
         runs = range(1, 15)
         file_names = eegbci.load_data(subjects=subjects, runs=runs, path=dataset)
     # if len(file_names) != len(runs):

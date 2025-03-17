@@ -3,6 +3,7 @@ from mne.decoding import CSP, UnsupervisedSpatialFilter
 from sklearn.decomposition import PCA, FastICA
 from sklearn.base import TransformerMixin
 from CustomCSP import CustomCSP
+from CustomCSPwhitening import CustomCSPwhitening 
 
 
 # transformer is used to transform the data but did apply any learning
@@ -25,6 +26,8 @@ class CustomTransformer(TransformerMixin):
                 transform_into="average_power", rank=None)
         elif name == 'CUSTOM_CSP':
             transformer = CustomCSP(n_components=64)
+        elif name == 'CUSTOM_CSP_WHITENING':
+            transformer = CustomCSPwhitening(n_components=64)
         elif name == "PCA":
             transformer = UnsupervisedSpatialFilter(PCA(4), average=False)
         elif name == "ICA":

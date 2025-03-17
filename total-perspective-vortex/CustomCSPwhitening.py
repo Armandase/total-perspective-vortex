@@ -6,11 +6,11 @@ from sklearn.base import TransformerMixin
 # CSP involves transforming the EEG data from the time domain to the spatial domain
 #   using a spatial filter. It applies a spatial filter to the multi-channel EEG data
 #   to enhance the signal variance of one class while reducing it for the other within the same domain.
-class CustomCSP(TransformerMixin):
+class CustomCSPwhitening(TransformerMixin):
     def __init__(self, n_components=4):
         self.n_components = n_components
         self.filters = None
-        self.name = 'CustomCSP'
+        self.name = 'customCSPWhitening'
         self.is_fit_ = False
         
     def normalized_spatial_covariance(self, X):
@@ -72,23 +72,23 @@ class CustomCSP(TransformerMixin):
         # les valeurs propres sont egales aux racines du polynome caracteristique de la matrice
         # eigvals, eigvecs = np.linalg.eig(composite_spatial_cov) # (V)
         eigvals, eigvecs = scipy.linalg.eigh(composite_spatial_cov) # (V)
-        # diagonal matrix of eigenvalues sorted in descending order
-        # sorted_eigvals = np.sort(eigvals)[::-1]
-        diag = np.diag(eigvals) # (D)
+
+
+        diag_inv_sqrt = np.diag(1.0 / np.sqrt(eigvals)) # (D)
         print('eigvecs shape: ', eigvecs.shape)
         
         # whitening matrix (P)
-        whitening = np.dot(np.sqrt(np.linalg.inv(diag)), eigvecs.T)
+        # whitening = np.dot(np.sqrt(np.linalg.inv(diag_inv_sqrt)), eigvecs.T)
+        whitening = np.dot(diag_inv_sqrt, eigvecs.T)
         
         # whitening performed on the spatial covariance matrices
-        spatial_cov_whitened = [] # PCnP′
+        spatial_cov_whitened = [] # Sn = PCnP′
         for cov in norm_spatial_cov:
-            spatial_cov_whitened.append(np.dot(np.dot(whitening, cov), whitening.T))
+            spatial_cov_whitened.append(np.dot(np.dot(whitening, cov), whitening.T)) 
 
         whitening_eigvecs = [] # BΛnB′
         for cov in spatial_cov_whitened:
             eigvals, eigvecs = scipy.linalg.eigh(cov)
-            # sorted_eigvals = np.sort(eigvals)[::-1]
             whitening_eigvecs.append(eigvals)
         
         # spatial filter (W)
@@ -97,8 +97,7 @@ class CustomCSP(TransformerMixin):
             # spatial_filter.append(np.dot(eigvecs.T, whitening))
             spatial_filter.append(eigvecs.T)
 
-        self.filters = np.array(spatial_filter)
-        # self.filters = np.array(spatial_filter[:self.n_components])
+        self.filters = np.array(spatial_filter[:self.n_components]) 
         
         self.is_fit_ = True
         return self
@@ -112,10 +111,8 @@ class CustomCSP(TransformerMixin):
             # raise ValueError("The model is not fitted yet")
             print("The model is not fitted yet")
             return X_transform
-        print(self.filters.shape)
         X_transform = np.asarray([np.dot(self.filters, x) for x in X_transform])
         X_transform = (X_transform ** 2).mean(axis=2)
-        print(X_transform.shape)
         return X_transform
     
     def fit_transform(self, X, y):
