@@ -6,8 +6,10 @@ from sklearn.model_selection import cross_val_score, ShuffleSplit, StratifiedKFo
 import numpy as np
 from pipeline import create_pipeline
 from mne import Epochs, pick_types
+import joblib
 
 MONTAGE = "Biosemi64"
+SEED=42
 DELTA_BAND = (0.5, 4.0)
 THETA_BAND = (4.0, 8.0)
 ALPHA_BAND = (7.0, 13.0)
@@ -20,14 +22,9 @@ def class_repartition(labels):
     return class_repartition
 
 
-def train(data, tmin=0.0, tmax=4.0, seed=None):
+def train(data, pipeline_names, tmin=1.0, tmax=4.0, seed=None):
     data.filter(ALPHA_BAND[0], BETA_BAND[1], fir_design='firwin', skip_by_annotation='edge')
-    # pipe =  create_pipeline(estimator_name='SVM', reducter_name='CSP')
-    # pipe =  create_pipeline(reducter_name='custom_CSP', estimator_name='LDA_shrinkage')
-    # pipe =  create_pipeline(reducter_name='CSP', estimator_name='LDA_shrinkage')
-    # pipe =  create_pipeline(reducter_name='custom_CSP_Whitening', estimator_name='KNN')
-    pipe =  create_pipeline(reducter_name='custom_CSP_Whitening', estimator_name='LDA_shrinkage')
-    # pipe =  create_pipeline(reducter_name='custom_CSP_Whitening', estimator_name='MLP')
+    pipe =  create_pipeline(pipeline_names)
     picks = pick_types(data.info, meg=False, eeg=True, stim=False, eog=False, exclude="bads")
     events, events_id = mne.events_from_annotations(data, event_id={"T1": 0, "T2": 1})
 
@@ -36,15 +33,14 @@ def train(data, tmin=0.0, tmax=4.0, seed=None):
     epochs_data_train = epochs_train.get_data(copy=False)
 
     # K-fold but still keep the dataset balanced(repartition) between the classes regardless of the fold
-    cv = StratifiedKFold(n_splits=5, random_state=seed, shuffle=True)
-    # cv = ShuffleSplit(n_splits=5, test_size=0.2, random_state=seed)
+    cv = StratifiedKFold(n_splits=10, random_state=seed, shuffle=True)
     
     labels = epochs.events[:, -1]
 
     print("Class repartition: ", class_repartition(labels))
 
+    # compute time taken
     # scores = cross_val_score(pipe, epochs_data_train, labels, cv=cv, n_jobs=None)
-
     # print("Classification accuracy: %0.1f (+/- %0.1f)" % (100 * scores.mean(), 100 * scores.std()))
 
     avg_val_scores = []
@@ -60,15 +56,15 @@ def train(data, tmin=0.0, tmax=4.0, seed=None):
         print("Score: ", score)
         avg_scores.append(score)
         avg_val_scores.append(val_score)
-    print("Average score: ", np.mean(avg_scores))
-    print("Val average score: ", np.mean(avg_val_scores))
+    print(f"Average score: {np.mean(avg_scores):.2f} std: {np.std(avg_scores):.2f}")
+    print(f"Val average score: {np.mean(avg_val_scores):.2f} std: {np.std(avg_val_scores):.2f}")
 
-    # process testing
-    # print("Test score: ", pipe.score(epochs_data_test, epochs_test.events[:, -1]))
+    # save the pipeline
+    joblib.dump(pipe, 'pipeline.joblib')
+
     
 def plots(raw, montage):
     plot_matrix(raw)
-    # plot_channels(raw)
     intensity_per_channels(raw)
     each_channel(raw)
     custom_psd_plot(raw)
@@ -83,17 +79,14 @@ def set_montage(raw, montage_name=MONTAGE):
     raw.set_montage(data_montage, on_missing='ignore')
     return raw, data_montage
 
-def main(dataset, subject, runs, visual=False, full=False):
+def main(dataset, subject, runs, visual=False, full=False, pipeline=['wavelet', 'custom_CSP_Whitening', 'LDA_shrinkage']):
     if full is False:
         file_names = eegbci.load_data(subjects=subject, runs=runs, path=dataset)
     else:
         print("Loading all runs")
-        # subjects = range(1, 110)
-        subjects = range(1, 50)
+        subjects = range(1, 110)
         runs = range(1, 15)
         file_names = eegbci.load_data(subjects=subjects, runs=runs, path=dataset)
-    # if len(file_names) != len(runs):
-        # raise Exception(f"Fail to open {len(runs)} runs")
 
     raw = mne.io.concatenate_raws([mne.io.read_raw_edf(f, preload=True) for f in file_names])
     raw, montage_name = set_montage(raw)
@@ -102,7 +95,7 @@ def main(dataset, subject, runs, visual=False, full=False):
         montage = mne.channels.make_standard_montage(montage_name)
         plots(raw, montage)
         exit(0)
-    train(raw, tmin=0., tmax=4., seed=42)
+    train(raw, pipeline, tmin=0., tmax=4., seed=SEED)
 
 
 if __name__ == "__main__":
@@ -122,5 +115,8 @@ if __name__ == "__main__":
     params.add_argument(
         '--full', default=False, action=argparse.BooleanOptionalAction
     )
+    params.add_argument(
+        '--pipeline', '-p', nargs='+', help='Pipeline elements, last element should be the estimator and the other are transformers', required=False, type=str, default=['wavelet', 'custom_CSP_Whitening', 'LDA_shrinkage']
+    )
     args = params.parse_args()
-    main(args.dataset, args.subject, args.runs, args.visual, args.full)
+    main(args.dataset, args.subject, args.runs, args.visual, args.full, args.pipeline)

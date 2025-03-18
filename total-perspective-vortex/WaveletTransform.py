@@ -64,10 +64,7 @@ class WaveletTransform(TransformerMixin):
         return X_transform
     
     def fit_transform(self, X, y):
-        print('Fitting and transforming ', self.name)
         self.fit(X, y)
-        # filters should be (64, 64)
-        # output should be (12, n_components)
         return self.transform(X)
     
     def get_name(self):

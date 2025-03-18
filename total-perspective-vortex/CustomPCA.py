@@ -6,30 +6,18 @@ from sklearn.base import TransformerMixin
 # CSP involves transforming the EEG data from the time domain to the spatial domain
 #   using a spatial filter. It applies a spatial filter to the multi-channel EEG data
 #   to enhance the signal variance of one class while reducing it for the other within the same domain.
-class CustomCSP(TransformerMixin):
+class CustomPCA(TransformerMixin):
     def __init__(self, n_components=4):
         self.n_components = n_components
-        self.filters = None
-        self.name = 'CustomCSP'
+        self.weights = None
+        self.name = 'CustomPCA'
         self.is_fit_ = False
         
     def normalized_spatial_covariance(self, X):
-        """
-        compute the covariance for a single trial
-            and normalize it to eliminate the magnitude variation in EEG between individuals
-        
-         input: X (n_channels, n_samples)
-         
-         return: cov (n_channels, n_channels)
-        """
         cov = np.dot(X, X.T)
         return cov / np.trace(cov)
     
     def population_covariance(self, X):
-        """
-            compute the average spatial covariance
-        """ 
-        
         n_trials = X.shape[0]
         factor = 1 / n_trials
         pop_cov = np.zeros((X.shape[1], X.shape[1]))
@@ -46,34 +34,23 @@ class CustomCSP(TransformerMixin):
         return list_class
     
     def decentre_data(self, X, X_avg):
-        """
-        Decenter the data with respect to their class average
-        """
         return X - X_avg
     
     def fit(self, X, y=None):
         X_cpy = X.copy()
-        list_class = self.extract_class(X_cpy, y)
-        avg_class = []
-        for x_class in list_class:
-            avg_class.append(np.mean(x_class, axis=0))
-        for i in range(X_cpy.shape[0]):
-            X_cpy[i] = self.decentre_data(X_cpy[i], avg_class[y[i]]) # En
+
+        decentered_data = [self.decentre_data(trial, np.mean(trial, axis=0)) for trial in X_cpy]
+        decentered_data = np.asarray(decentered_data)
         
-        decentred_list_class = self.extract_class(X_cpy, y)
-        norm_spatial_cov = []
-        for decentred_class in decentred_list_class:
-            norm_spatial_cov.append(self.population_covariance(decentred_class)) # (Cn)
+        norm_spatial_cov = self.population_covariance(decentered_data)
         
-        #compostite qui signifie que c'est la combinaison de plusieurs elements
-        composite_spatial_cov = np.sum(norm_spatial_cov, axis=0) # (Cc)
-        # decomposition en valeurs propres
-        # les valeurs propres sont egales aux racines du polynome caracteristique de la matrice
-        # sorted in ascending order        
-        eigvals, eigvecs = scipy.linalg.eigh(composite_spatial_cov) # (V)
-        self.filters = eigvecs[:, :self.n_components] # (W)
+        eigvals, eigvecs = scipy.linalg.eigh(norm_spatial_cov)
+        eigvals = np.flip(eigvals)
+        eigvecs = np.flip(eigvecs, axis=1)
+
+        self.weights = eigvecs[:, :self.n_components]
         
-        X = np.asarray([np.dot(self.filters, x) for x in X])
+        X = np.asarray([np.dot(self.weights.T, x) for x in X])
         X = (X ** 2).mean(axis=2)
 
         # To standardize features
@@ -84,12 +61,14 @@ class CustomCSP(TransformerMixin):
         return self
 
     def transform(self, X, log=False):
-        X_transform = X.copy()
-
         if self.is_fit_ is False:
             raise ValueError("The model is not fitted yet")
+        X_transform = X.copy()
+
+        # X_transform = [self.decentre_data(trial, np.mean(trial, axis=0)) for trial in X_transform]
+        # X_transform = np.asarray(X_transform)
         # apply spatial filter to the data
-        X_transform = np.asarray([np.dot(self.filters, x) for x in X_transform])
+        X_transform = np.asarray([np.dot(self.weights.T, x) for x in X_transform])
         X_transform = (X_transform ** 2).mean(axis=2)
         if log is True:
             X_transform = np.log(X_transform)

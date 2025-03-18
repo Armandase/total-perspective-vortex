@@ -38,16 +38,12 @@ class CustomEstimator(BaseEstimator):
         elif name == 'KNN':
             classifier = KNeighborsClassifier(n_neighbors=3)
         elif name == 'MLP':
-            # add option to prevent overfitting 
-            classifier = MLPClassifier(activation='relu', max_iter=300, hidden_layer_sizes=(256, 128, 64), solver='adam')
+            classifier = MLPClassifier(activation='relu', max_iter=100, hidden_layer_sizes=(256, 128, 64), solver='adam')
         else:
             raise Exception(f'{name} is not handle')
         return classifier
     
     def fit(self, X, y):
-        # Reshape X to be 2-dimensional
-        # n_samples, n_channels, n_times = X.shape
-        # X_reshaped = X.reshape(n_samples, n_channels * n_times)
         self.classifier.fit(X=X, y=y)
         self.is_fitted_ = True
         return self
@@ -55,10 +51,6 @@ class CustomEstimator(BaseEstimator):
     def predict(self, X):
         if not self.is_fitted_:
             raise Exception("This %s instance is not fitted yet" % self.__class__.__name__)
-        # Reshape X to be 2-dimensional
-        # n_samples, n_channels, n_times = X.shape
-        # X_reshaped = X.reshape(n_samples, n_channels * n_times)
-        # X_reshaped = X.reshape(n_samples, n_channels * n_times)
         y_pred = self.classifier.predict(X)
         return y_pred
         

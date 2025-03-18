@@ -3,7 +3,8 @@ from mne.decoding import CSP, UnsupervisedSpatialFilter
 from sklearn.decomposition import PCA, FastICA
 from sklearn.base import TransformerMixin
 from CustomCSP import CustomCSP
-from CustomCSPwhitening import CustomCSPwhitening 
+from CustomCSPwhitening import CustomCSPwhitening
+from CustomPCA import CustomPCA
 from WaveletTransform import WaveletTransform
 
 
@@ -31,10 +32,8 @@ class CustomTransformer(TransformerMixin):
             transformer = CustomCSPwhitening(n_components=64)
         elif name == 'WAVELET':
             transformer = WaveletTransform(n_channels=64)
-        elif name == "PCA":
-            transformer = UnsupervisedSpatialFilter(PCA(4), average=False)
-        elif name == "ICA":
-            transformer = UnsupervisedSpatialFilter(FastICA(4, whiten='unit-variance'), average=False)
+        elif name == "CUSTOM_PCA":
+            transformer = CustomPCA(n_components=10)
         else:
             raise Exception(f'{name} is not handle')
         return transformer
