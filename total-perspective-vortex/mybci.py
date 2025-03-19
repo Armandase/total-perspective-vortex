@@ -52,12 +52,12 @@ def train(data, pipeline_names, tmin=0.0, tmax=4.0, seed=None):
         X_test = epochs_data_train[test_idx]
         pipe.fit(X_train, y_train)
         score = pipe.score(X_train, y_train)
-        val_score = pipe.score(X_test, y_test)
-        print("Score: ", score)
-        avg_scores.append(score)
-        avg_val_scores.append(val_score)
-    print(f"Average score: {np.mean(avg_scores):.2f} std: {np.std(avg_scores):.2f}")
-    print(f"Val average score: {np.mean(avg_val_scores):.2f} std: {np.std(avg_val_scores):.2f}")
+        # val_score = pipe.score(X_test, y_test)
+        # print("Score: ", score)
+        # avg_scores.append(score)
+        # avg_val_scores.append(val_score)
+    # print(f"Average score: {np.mean(avg_scores):.2f} std: {np.std(avg_scores):.2f}")
+    # print(f"Val average score: {np.mean(avg_val_scores):.2f} std: {np.std(avg_val_scores):.2f}")
 
     # save the pipeline
     joblib.dump(pipe, 'pipeline.joblib')
