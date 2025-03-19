@@ -22,7 +22,7 @@ def class_repartition(labels):
     return class_repartition
 
 
-def train(data, pipeline_names, tmin=1.0, tmax=4.0, seed=None):
+def train(data, pipeline_names, tmin=0.0, tmax=4.0, seed=None):
     data.filter(ALPHA_BAND[0], BETA_BAND[1], fir_design='firwin', skip_by_annotation='edge')
     pipe =  create_pipeline(pipeline_names)
     picks = pick_types(data.info, meg=False, eeg=True, stim=False, eog=False, exclude="bads")
@@ -33,15 +33,15 @@ def train(data, pipeline_names, tmin=1.0, tmax=4.0, seed=None):
     epochs_data_train = epochs_train.get_data(copy=False)
 
     # K-fold but still keep the dataset balanced(repartition) between the classes regardless of the fold
-    cv = StratifiedKFold(n_splits=10, random_state=seed, shuffle=True)
+    cv = StratifiedKFold(n_splits=5, random_state=seed, shuffle=True)
     
     labels = epochs.events[:, -1]
 
     print("Class repartition: ", class_repartition(labels))
 
     # compute time taken
-    # scores = cross_val_score(pipe, epochs_data_train, labels, cv=cv, n_jobs=None)
-    # print("Classification accuracy: %0.1f (+/- %0.1f)" % (100 * scores.mean(), 100 * scores.std()))
+    scores = cross_val_score(pipe, epochs_data_train, labels, cv=cv, n_jobs=None)
+    print("Classification accuracy: %0.1f (+/- %0.1f)" % (100 * scores.mean(), 100 * scores.std()))
 
     avg_val_scores = []
     avg_scores = []

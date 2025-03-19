@@ -6,6 +6,7 @@ import joblib
 from mybci import set_montage, class_repartition, MONTAGE, ALPHA_BAND, BETA_BAND
 
 MONTAGE = "Biosemi64"
+FREQ = 160.0
 DELTA_BAND = (0.5, 4.0)
 THETA_BAND = (4.0, 8.0)
 ALPHA_BAND = (7.0, 13.0)
@@ -59,8 +60,7 @@ def main(pipeline_path, dataset, subject, runs, full=False):
     list_raw = []
     for f in file_names:
         raw = mne.io.read_raw_edf(f, preload=True)
-        # raw, _ = set_montage(raw)
-        raw.resample(160)
+        raw.resample(FREQ)
         list_raw.append(raw)
     raw = mne.io.concatenate_raws(list_raw)
     raw, _ = set_montage(raw)

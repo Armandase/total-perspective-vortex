@@ -49,9 +49,6 @@ class CustomCSPwhitening(CustomCSP):
         eigvecs = eigvecs[:, :self.n_components] # (W)
         # To standardize features
         self.filters = np.array(eigvecs.T)
-        # self.filters = np.array(eigvecs.T)[:, :self.n_components]
-        
-        
         
         X_in = np.asarray([np.dot(self.filters, x) for x in X_in])
         X_in = (X_in ** 2).mean(axis=2)

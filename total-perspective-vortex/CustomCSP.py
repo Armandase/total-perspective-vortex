@@ -71,7 +71,9 @@ class CustomCSP(TransformerMixin):
         # les valeurs propres sont egales aux racines du polynome caracteristique de la matrice
         # sorted in ascending order        
         eigvals, eigvecs = scipy.linalg.eigh(composite_spatial_cov) # (V)
-        self.filters = eigvecs[:, :self.n_components] # (W)
+
+        self.filters = eigvecs.T
+        self.filters = self.filters[:self.n_components] # (W)
         
         X = np.asarray([np.dot(self.filters, x) for x in X])
         X = (X ** 2).mean(axis=2)
@@ -88,6 +90,7 @@ class CustomCSP(TransformerMixin):
 
         if self.is_fit_ is False:
             raise ValueError("The model is not fitted yet")
+        
         # apply spatial filter to the data
         X_transform = np.asarray([np.dot(self.filters, x) for x in X_transform])
         X_transform = (X_transform ** 2).mean(axis=2)

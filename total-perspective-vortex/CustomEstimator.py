@@ -4,6 +4,7 @@ from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.neural_network import MLPClassifier
 from sklearn import svm
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score
 
 # estimator is used to predict the data
@@ -39,6 +40,8 @@ class CustomEstimator(BaseEstimator):
             classifier = KNeighborsClassifier(n_neighbors=3)
         elif name == 'MLP':
             classifier = MLPClassifier(activation='relu', max_iter=100, hidden_layer_sizes=(256, 128, 64), solver='adam')
+        elif name == 'RANDOM_FOREST':
+            classifier = RandomForestClassifier(n_estimators=100)
         else:
             raise Exception(f'{name} is not handle')
         return classifier

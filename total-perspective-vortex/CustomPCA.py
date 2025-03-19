@@ -65,8 +65,6 @@ class CustomPCA(TransformerMixin):
             raise ValueError("The model is not fitted yet")
         X_transform = X.copy()
 
-        # X_transform = [self.decentre_data(trial, np.mean(trial, axis=0)) for trial in X_transform]
-        # X_transform = np.asarray(X_transform)
         # apply spatial filter to the data
         X_transform = np.asarray([np.dot(self.weights.T, x) for x in X_transform])
         X_transform = (X_transform ** 2).mean(axis=2)

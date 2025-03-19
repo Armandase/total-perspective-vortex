@@ -1,7 +1,7 @@
 # total-perspective-vortex 
 
 
-# Ressources:
+## Ressources:
 ### Dataset:
 https://physionet.org/content/eegmmidb/1.0.0/
 ### Pipeline with MNE & sklearn on EEG data with CSP
@@ -19,8 +19,8 @@ https://www.frontiersin.org/journals/neuroscience/articles/10.3389/fnins.2023.11
 https://medium.com/geekculture/common-spatial-pattern-and-its-applications-in-the-healthcare-industry-faa4311dab79
 ### R-CSP (net implemented yet)
 https://personal.ntu.edu.sg/ctguan/Publications/2010_Haiping_IEEE_TBME.pdf
-###
-###
+### PCA :
+https://github.com/RezaSaadatyar/EEG-Lab/tree/main
 
 ### Wavelet denoising:
 https://www.kaggle.com/code/yusaku5739/eeg-signal-denosing-using-wavelet-transform
