@@ -27,7 +27,6 @@ class CustomCSPwhitening(CustomCSP):
                 norm_spatial_cov.append(self.avg_covariance(decentred_class).T)
             else:
                 norm_spatial_cov.append(self.concat_covariance(decentred_class).T) # (Cn)
-            # norm_spatial_cov.append(self.avg_covariance(decentred_class).T) # (Cn)
         
         #compostite qui signifie que c'est la combinaison de plusieurs elements
         composite_spatial_cov = np.sum(norm_spatial_cov, axis=0) # (Cc)
@@ -35,8 +34,6 @@ class CustomCSPwhitening(CustomCSP):
         # decomposition en valeurs propres
         # les valeurs propres sont egales aux racines du polynome caracteristique de la matrice
         eigvals, eigvecs = scipy.linalg.eigh(composite_spatial_cov) # (V)
-        # np.flip(eigvals, axis=0)
-        # np.flip(eigvecs, axis=1)
 
         diag_inv_sqrt = np.diag(np.sqrt(1/(eigvals + 1e-6))) # (D)
         
@@ -52,8 +49,8 @@ class CustomCSPwhitening(CustomCSP):
         composite_spatial_cov_whitened = np.sum(spatial_cov_whitened, axis=0) # (BΛnB′)
         eigvals, eigvecs = scipy.linalg.eigh(spatial_cov_whitened[0], composite_spatial_cov_whitened) # (V)
         # To standardize features
-        # self.filters = np.array(eigvecs.T)
-        self.filters = np.dot(eigvecs.T, self.whitening_filter)
+        # self.filters = np.dot(eigvecs.T, self.whitening_filter)
+        self.filters = eigvecs
         
         picked_whitening = self.whitening_filter.T
         picked_filters = self.filters[:, :self.n_components].T
@@ -76,8 +73,6 @@ class CustomCSPwhitening(CustomCSP):
             raise ValueError("The model is not fitted yet")
         
         # apply spatial filter to the data
-        # picked_whitening = self.whitening_filter.T[:, :self.n_components]
-        # picked_filters = self.filters.T[:, :self.n_components]
         picked_whitening = self.whitening_filter.T
         picked_filters = self.filters[:, :self.n_components].T
         X_transform = np.asarray([np.dot(picked_whitening, x) for x in X_transform])        

@@ -4,6 +4,12 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 
 def custom_psd_plot(raw: mne.io.Raw):
+    """ Display the power spectral density of the raw edf file
+        Power spectral density is the measure of signal power
+        with respect to the frequency
+    Args:
+        raw (mne.io.Raw): raw edf file
+    """
     raw.compute_psd().plot(picks="data", exclude="bads", average=True, spatial_colors=True)
     plt.show()
 

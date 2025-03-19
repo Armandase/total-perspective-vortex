@@ -1,6 +1,0 @@
-STATES = ['Baseline, eyes open',
-          'Baseline, eyes closed',
-          'Task 1 (open and close left or right fist)',
-          'Task 2 (imagine opening and closing left or right fist)',
-          'Task 3 (open and close both fists or both feet) ',
-          'Task 4 (imagine opening and closing both fists or both feet)']

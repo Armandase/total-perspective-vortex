@@ -20,9 +20,25 @@ def class_repartition(labels):
     class_repartition = np.bincount(labels)
     class_repartition = class_repartition / np.sum(class_repartition)
     return class_repartition
+        
+def fit_pipeline(epochs_data_train, labels, pipe, cv):
+    avg_val_scores = []
+    avg_scores = []
+    for train_idx, test_idx in cv.split(epochs_data_train, labels):
+        y_train, y_test = labels[train_idx], labels[test_idx]
 
+        X_train = epochs_data_train[train_idx]
+        X_test = epochs_data_train[test_idx]
+        pipe.fit(X_train, y_train)
+        score = pipe.score(X_train, y_train)
+        val_score = pipe.score(X_test, y_test)
+        print("Score: ", score)
+        avg_scores.append(score)
+        avg_val_scores.append(val_score)
+    print(f"Average score: {np.mean(avg_scores):.2f} std: {np.std(avg_scores):.2f}")
+    print(f"Val average score: {np.mean(avg_val_scores):.2f} std: {np.std(avg_val_scores):.2f}")
 
-def train(data, pipeline_names, tmin=0.0, tmax=4.0, seed=None):
+def train(data, pipeline_names, tmin=0.0, tmax=4.0, seed=None, visual=False):
     data.filter(ALPHA_BAND[0], BETA_BAND[1], fir_design='firwin', skip_by_annotation='edge')
     pipe =  create_pipeline(pipeline_names)
     picks = pick_types(data.info, meg=False, eeg=True, stim=False, eog=False, exclude="bads")
@@ -37,35 +53,28 @@ def train(data, pipeline_names, tmin=0.0, tmax=4.0, seed=None):
     
     labels = epochs.events[:, -1]
 
-    print("Class repartition: ", class_repartition(labels))
-
-    # compute time taken
-    scores = cross_val_score(pipe, epochs_data_train, labels, cv=cv, n_jobs=None)
-    print("Classification accuracy: %0.1f (+/- %0.1f)" % (100 * scores.mean(), 100 * scores.std()))
-
-    avg_val_scores = []
-    avg_scores = []
-    for train_idx, test_idx in cv.split(epochs_data_train, labels):
-        y_train, y_test = labels[train_idx], labels[test_idx]
+    for train_idx, _ in cv.split(epochs_data_train, labels):
+        y_train = labels[train_idx]
 
         X_train = epochs_data_train[train_idx]
-        X_test = epochs_data_train[test_idx]
         pipe.fit(X_train, y_train)
-        score = pipe.score(X_train, y_train)
-        # val_score = pipe.score(X_test, y_test)
-        # print("Score: ", score)
-        # avg_scores.append(score)
-        # avg_val_scores.append(val_score)
-    # print(f"Average score: {np.mean(avg_scores):.2f} std: {np.std(avg_scores):.2f}")
-    # print(f"Val average score: {np.mean(avg_val_scores):.2f} std: {np.std(avg_val_scores):.2f}")
+        _ = pipe.score(X_train, y_train)
 
+    scores = cross_val_score(pipe, epochs_data_train, labels, cv=cv, n_jobs=None)
+    print("Class repartition: ", class_repartition(labels))
+    print("Classification accuracy: %0.1f (+/- %0.1f)" % (100 * scores.mean(), 100 * scores.std()))
+
+    if visual is True:
+        custom_psd_plot(data)
+        if 'wavelet' in pipeline_names:
+            each_channel(pipe[0].transform(epochs_data_train))
     # save the pipeline
     joblib.dump(pipe, 'pipeline.joblib')
 
     
 def plots(raw, montage):
     plot_matrix(raw)
-    intensity_per_channels(raw)
+    # intensity_per_channels(raw)
     each_channel(raw)
     custom_psd_plot(raw)
     plot_montage(montage)
@@ -94,8 +103,7 @@ def main(dataset, subject, runs, visual=False, full=False, pipeline=['wavelet', 
     if visual is True:
         montage = mne.channels.make_standard_montage(montage_name)
         plots(raw, montage)
-        exit(0)
-    train(raw, pipeline, tmin=0., tmax=4., seed=SEED)
+    train(raw, pipeline, tmin=0., tmax=4., seed=SEED, visual=visual)
 
 
 if __name__ == "__main__":

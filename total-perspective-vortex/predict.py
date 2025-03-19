@@ -18,13 +18,13 @@ def class_repartition(labels):
     class_repartition = class_repartition / np.sum(class_repartition)
     return class_repartition
 
-def predict(data, pipeline_path):
+def predict(data, pipeline_path, tmin=1.0, tmax=4.0):
     pipe = joblib.load(pipeline_path)
     
     data.filter(ALPHA_BAND[0], BETA_BAND[1], fir_design='firwin', skip_by_annotation='edge')
     picks = mne.pick_types(data.info, meg=False, eeg=True, stim=False, eog=False, exclude="bads")
     events, events_id = mne.events_from_annotations(data, event_id={"T1": 0, "T2": 1})
-    epochs = mne.Epochs(raw=data, events=events, event_id=events_id, tmin=1.0, tmax=4.0, proj=True, picks=picks, baseline=None, preload=True)
+    epochs = mne.Epochs(raw=data, events=events, event_id=events_id, tmin=tmin, tmax=tmax, proj=True, picks=picks, baseline=None, preload=True)
     epochs_data = epochs.get_data(copy=False)
     labels = epochs.events[:, -1]
     
@@ -39,16 +39,7 @@ def predict(data, pipeline_path):
     print(f"Score: {score*100:.2f}%")
     
 
-def set_montage(raw, montage_name=MONTAGE):
-    montages = mne.channels.get_builtin_montages()
-    data_montage = next((montage for montage in montages if montage_name in montage.title()), None)
-    if data_montage is None:
-        print("Could not find montage")
-        exit(1)
-    raw.set_montage(data_montage, on_missing='ignore')
-    return raw, data_montage
-
-def main(pipeline_path, dataset, subject, runs, full=False):
+def main(pipeline_path, dataset, subject, runs, full=False, tmin=1.0, tmax=4.0):
     if full is False:
         file_names = eegbci.load_data(subjects=subject, runs=runs, path=dataset)
     else:
@@ -65,7 +56,7 @@ def main(pipeline_path, dataset, subject, runs, full=False):
     raw = mne.io.concatenate_raws(list_raw)
     raw, _ = set_montage(raw)
 
-    predict(raw, pipeline_path)
+    predict(raw, pipeline_path, tmin, tmax)
     
 
 if __name__ == "__main__":
@@ -80,10 +71,16 @@ if __name__ == "__main__":
         "--subject", "-s", help="Subject use to plots", default=1, type=int
     )
     params.add_argument(
-        '-r','--runs', nargs='+', help='Expemerients used', required=True, type=int
+        '-r','--runs', nargs='+', help='Expemerients used', default=[6, 10, 14], type=int
     )
     params.add_argument(
         '--full', default=False, action=argparse.BooleanOptionalAction
     )
+    params.add_argument(
+        '--tmin', default=1.0, type=float
+    )
+    params.add_argument(
+        '--tmax', default=4.0, type=float
+    )
     args = params.parse_args()
-    main(args.pipeline, args.dataset, args.subject, args.runs, args.full)
+    main(args.pipeline, args.dataset, args.subject, args.runs, args.full, args.tmin, args.tmax)

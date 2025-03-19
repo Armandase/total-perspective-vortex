@@ -1,6 +1,5 @@
 import numpy as np
-from mne.decoding import CSP, UnsupervisedSpatialFilter
-from sklearn.decomposition import PCA, FastICA
+from mne.decoding import CSP
 from sklearn.base import TransformerMixin
 from CustomCSP import CustomCSP
 from CustomCSPwhitening import CustomCSPwhitening

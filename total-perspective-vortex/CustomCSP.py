@@ -118,7 +118,6 @@ class CustomCSP(TransformerMixin):
         self.filters = eigvecs
 
         picked_filters = self.filters[:, :self.n_components].T
-        # X = np.asarray([np.dot(self.filters[:self.n_components], x) for x in X])
         X = np.asarray([np.dot(picked_filters, x) for x in X])
         X = (X ** 2).mean(axis=2)
 
